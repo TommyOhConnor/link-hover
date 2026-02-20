@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navigation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link id="googleFont" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f2f2f0;
+      font-family: 'Inter', sans-serif;
+      cursor: none;
+      overflow-x: hidden;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Cursor blob ── */
+    .cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 140px;
+      height: 140px;
+      background: white;
+      border-radius: 50%;
+      pointer-events: none;
+      mix-blend-mode: difference;
+      transform: translate(-50%, -50%) scale(0.1);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  width 0.3s ease,
+                  height 0.3s ease;
+      z-index: 9999;
+      will-change: transform, left, top;
+    }
+
+    .cursor.visible {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* ── Nav area ── */
+    nav {
+      flex: 1;
+      padding: 6rem 5rem;
+      transition: background 0.3s ease;
+    }
+
+    .nav-item {
+      display: table;
+      font-weight: 800;
+      color: #111;
+      text-decoration: none;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      padding: 0.1em 0;
+      white-space: nowrap;
+      transition: font-size 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+                  color 0.3s ease;
+      user-select: none;
+    }
+
+    /* ── Control Panel ── */
+    .panel {
+      width: 260px;
+      min-height: 100vh;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      flex-shrink: 0;
+      cursor: default;
+      overflow-y: auto;
+    }
+
+    .panel h2 {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: -0.5rem;
+    }
+
+    .control {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .control label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0.9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control label span {
+      font-weight: 400;
+      opacity: 0.5;
+      font-size: 0.8rem;
+    }
+
+    /* Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      background: #444;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Select */
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid rgba(255,255,255,0.4);
+      pointer-events: none;
+    }
+
+    select {
+      width: 100%;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      padding: 0.6rem 2rem 0.6rem 0.75rem;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      transition: border-color 0.2s ease;
+    }
+
+    select:focus { border-color: #666; }
+
+    /* Color picker */
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+      flex-shrink: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 50%;
+    }
+
+    .color-hex {
+      font-size: 0.8rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      opacity: 0.5;
+      letter-spacing: 0.05em;
+    }
+
+    /* Textarea */
+    textarea {
+      width: 100%;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      padding: 0.75rem;
+      resize: vertical;
+      outline: none;
+      min-height: 110px;
+      transition: border-color 0.2s ease;
+      cursor: text;
+    }
+
+    textarea:focus { border-color: #666; }
+
+    .hint {
+      font-size: 0.72rem;
+      opacity: 0.35;
+      line-height: 1.5;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    /* Reset button */
+    .btn-reset {
+      margin-top: auto;
+      padding: 0.7rem 1rem;
+      background: transparent;
+      border: 1px solid #444;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn-reset:hover {
+      background: #2a2a2a;
+      border-color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <nav id="nav"></nav>
+
+  <aside class="panel">
+    <h2>Controls</h2>
+
+    <div class="control">
+      <label>Items</label>
+      <textarea id="itemsInput">John,; Paul,; George,; & Ringo</textarea>
+      <p class="hint">Separate items with semicolons. Each becomes a new line.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="control">
+      <label>Font</label>
+      <div class="select-wrap">
+        <select id="fontSelect">
+          <option value="Inter">Inter</option>
+          <option value="Playfair Display">Playfair Display</option>
+          <option value="Space Grotesk">Space Grotesk</option>
+          <option value="Bebas Neue">Bebas Neue</option>
+          <option value="Fraunces" selected>Fraunces</option>
+          <option value="Syne">Syne</option>
+          <option value="Cormorant Garamond">Cormorant Garamond</option>
+          <option value="DM Sans">DM Sans</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label>Font Weight</label>
+      <div class="select-wrap">
+        <select id="fontWeight">
+          <option value="300">300 — Light</option>
+          <option value="400">400 — Regular</option>
+          <option value="500" selected>500 — Medium</option>
+          <option value="600">600 — Semi Bold</option>
+          <option value="700">700 — Bold</option>
+          <option value="800">800 — Extra Bold</option>
+          <option value="900">900 — Black</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="control">
+      <label>Font Size <span id="fontSizeVal">6vw</span></label>
+      <input type="range" id="fontSize" min="2" max="14" value="6" step="0.5">
+    </div>
+
+    <hr class="divider">
+
+    <div class="control">
+      <label>Circle Size <span id="sizeVal">100px</span></label>
+      <input type="range" id="circleSize" min="40" max="300" value="100">
+    </div>
+
+    <div class="control">
+      <label>Transition Speed <span id="speedVal">1.9s</span></label>
+      <input type="range" id="speed" min="100" max="2500" value="1900" step="50">
+    </div>
+
+    <div class="control">
+      <label>Growth Size <span id="growthVal">1.10×</span></label>
+      <input type="range" id="growth" min="100" max="250" value="110" step="1">
+    </div>
+
+    <hr class="divider">
+
+    <div class="control">
+      <label>Background Color</label>
+      <div class="color-row">
+        <input type="color" id="bgColor" value="#ffff5c">
+        <span class="color-hex" id="bgHex">#ffff5c</span>
+      </div>
+    </div>
+
+    <div class="control">
+      <label>Text Color</label>
+      <div class="color-row">
+        <input type="color" id="textColor" value="#111111">
+        <span class="color-hex" id="textHex">#111111</span>
+      </div>
+    </div>
+
+    <button class="btn-reset" id="resetBtn">Reset to Defaults</button>
+    <button class="btn-reset" id="exportBtn" style="border-color:#fff;color:#fff;">Export HTML</button>
+  </aside>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const nav    = document.getElementById('nav');
+
+    // ── State ──
+    let hoverScale         = 1.10;
+    let transitionDuration = 1.9;
+    let baseVW             = 6;
+    let currentFont        = 'Fraunces';
+    let currentWeight      = '500';
+
+    const defaults = {
+      items:      'John,; Paul,; George,; & Ringo',
+      font:       'Fraunces',
+      fontWeight: '500',
+      fontSize:   6,
+      size:       100,
+      bg:         '#ffff5c',
+      text:       '#111111',
+      speed:      1900,
+      growth:     110,
+    };
+
+    // Per-font: available weights + Google Fonts URL
+    const fontData = {
+      'Inter':              { weights: [300,400,500,600,700,800,900], url: 'family=Inter:wght@300;400;500;600;700;800;900' },
+      'Playfair Display':   { weights: [400,500,600,700,800,900],     url: 'family=Playfair+Display:wght@400;500;600;700;800;900' },
+      'Space Grotesk':      { weights: [300,400,500,600,700],         url: 'family=Space+Grotesk:wght@300;400;500;600;700' },
+      'Bebas Neue':         { weights: [400],                         url: 'family=Bebas+Neue' },
+      'Fraunces':           { weights: [300,400,500,600,700,800,900], url: 'family=Fraunces:wght@300;400;500;600;700;800;900' },
+      'Syne':               { weights: [400,500,600,700,800],         url: 'family=Syne:wght@400;500;600;700;800' },
+      'Cormorant Garamond': { weights: [300,400,500,600,700],         url: 'family=Cormorant+Garamond:wght@300;400;500;600;700' },
+      'DM Sans':            { weights: [300,400,500,600,700,800,900], url: 'family=DM+Sans:wght@300;400;500;600;700;800;900' },
+    };
+
+    // ── Cursor follow ──
+    let mouseX = 0, mouseY = 0, curX = 0, curY = 0;
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    (function loop() {
+      curX = lerp(curX, mouseX, 0.12);
+      curY = lerp(curY, mouseY, 0.12);
+      cursor.style.left = curX + 'px';
+      cursor.style.top  = curY + 'px';
+      requestAnimationFrame(loop);
+    })();
+
+    // ── Accordion scale ──
+    function scaleAt(dist) {
+      if (dist === 0) return hoverScale;
+      const squeeze = 1 - (hoverScale - 1) * 0.3;
+      if (dist === 1) return squeeze * 0.95;
+      if (dist === 2) return squeeze * 0.88;
+      return squeeze * 0.84;
+    }
+
+    function applyScale(hoveredIndex) {
+      nav.querySelectorAll('.nav-item').forEach((item, j) => {
+        item.style.fontSize = (baseVW * scaleAt(Math.abs(hoveredIndex - j))) + 'vw';
+      });
+    }
+
+    function resetScale() {
+      nav.querySelectorAll('.nav-item').forEach(item => item.style.fontSize = baseVW + 'vw');
+    }
+
+    // ── Build nav ──
+    function buildNav(labels) {
+      nav.innerHTML = '';
+      labels.forEach((label, i) => {
+        const a = document.createElement('a');
+        a.className        = 'nav-item';
+        a.href             = '#';
+        a.textContent      = label.trim();
+        a.style.color = document.getElementById('textColor').value;
+        a.style.fontSize   = baseVW + 'vw';
+        a.style.fontFamily = `'${currentFont}', sans-serif`;
+        a.style.fontWeight = currentWeight;
+        a.style.transition = `font-size ${transitionDuration}s cubic-bezier(0.16, 1, 0.3, 1), width ${transitionDuration}s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease`;
+        nav.appendChild(a);
+      });
+    }
+
+    // ── Hover tracking via vertical midpoints ──
+    let activeIndex = -1;
+
+    function getHoveredIndex(x, y) {
+      const items  = [...nav.querySelectorAll('.nav-item')];
+      if (!items.length) return -1;
+
+      const navRect = nav.getBoundingClientRect();
+
+      // Bail if cursor is outside the nav horizontally or well outside vertically
+      if (x < navRect.left || x > navRect.right) return -1;
+      if (y < navRect.top - 40 || y > navRect.bottom + 40) return -1;
+
+      // Find the item whose vertical center is closest to the cursor
+      let closest = 0, minDist = Infinity;
+      items.forEach((item, i) => {
+        const r    = item.getBoundingClientRect();
+        const dist = Math.abs(y - (r.top + r.bottom) / 2);
+        if (dist < minDist) { minDist = dist; closest = i; }
+      });
+
+      // Only activate if cursor is over the text horizontally (with small buffer)
+      const activeRect = items[closest].getBoundingClientRect();
+      if (x < activeRect.left - 10 || x > activeRect.right + 10) return -1;
+
+      return closest;
+    }
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      const idx = getHoveredIndex(e.clientX, e.clientY);
+      if (idx === activeIndex) return;
+      activeIndex = idx;
+
+      if (idx === -1) {
+        cursor.classList.remove('visible');
+        resetScale();
+      } else {
+        cursor.classList.add('visible');
+        applyScale(idx);
+      }
+    });
+
+    function applyTransition() {
+      nav.querySelectorAll('.nav-item').forEach(item => {
+        item.style.transition = `font-size ${transitionDuration}s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease`;
+      });
+    }
+
+    function applyFont() {
+      nav.querySelectorAll('.nav-item').forEach(item => {
+        item.style.fontFamily = `'${currentFont}', sans-serif`;
+        item.style.fontWeight = currentWeight;
+      });
+    }
+
+    // Load a Google Font dynamically and update weight options
+    function loadFont(name) {
+      const data = fontData[name];
+      document.getElementById('googleFont').href =
+        `https://fonts.googleapis.com/css2?${data.url}&display=swap`;
+
+      // Rebuild weight options to only show what this font supports
+      const weightSelect = document.getElementById('fontWeight');
+      const labels = { 300:'300 — Light', 400:'400 — Regular', 500:'500 — Medium',
+                       600:'600 — Semi Bold', 700:'700 — Bold', 800:'800 — Extra Bold', 900:'900 — Black' };
+      weightSelect.innerHTML = data.weights.map(w =>
+        `<option value="${w}"${String(w) === currentWeight ? ' selected' : ''}>${labels[w]}</option>`
+      ).join('');
+
+      // Clamp current weight to nearest available
+      const closest = data.weights.reduce((a, b) =>
+        Math.abs(b - parseInt(currentWeight)) < Math.abs(a - parseInt(currentWeight)) ? b : a
+      );
+      currentWeight = String(closest);
+      weightSelect.value = currentWeight;
+    }
+
+    // ── Initial load — apply all defaults to DOM ──
+    loadFont(defaults.font);
+    buildNav(defaults.items.split(';'));
+    document.body.style.background  = defaults.bg;
+    cursor.style.width               = defaults.size + 'px';
+    cursor.style.height              = defaults.size + 'px';
+
+    // ── Items textarea ──
+    const itemsInput = document.getElementById('itemsInput');
+    itemsInput.addEventListener('input', () => {
+      buildNav(itemsInput.value.split(';').filter(l => l.trim()));
+    });
+
+    // ── Font selector ──
+    const fontSelect = document.getElementById('fontSelect');
+    fontSelect.addEventListener('change', () => {
+      currentFont = fontSelect.value;
+      loadFont(currentFont);
+      applyFont();
+    });
+
+    // ── Font weight ──
+    const fontWeightSelect = document.getElementById('fontWeight');
+    fontWeightSelect.addEventListener('change', () => {
+      currentWeight = fontWeightSelect.value;
+      applyFont();
+    });
+
+    // ── Font size ──
+    const fontSizeInput = document.getElementById('fontSize');
+    const fontSizeVal   = document.getElementById('fontSizeVal');
+    fontSizeInput.addEventListener('input', () => {
+      baseVW = parseFloat(fontSizeInput.value);
+      fontSizeVal.textContent = baseVW + 'vw';
+      resetScale();
+    });
+
+    // ── Speed ──
+    const speedInput = document.getElementById('speed');
+    const speedVal   = document.getElementById('speedVal');
+    speedInput.addEventListener('input', () => {
+      transitionDuration = speedInput.value / 1000;
+      speedVal.textContent = transitionDuration.toFixed(2).replace(/\.?0+$/, '') + 's';
+      applyTransition();
+    });
+
+    // ── Growth ──
+    const growthInput = document.getElementById('growth');
+    const growthVal   = document.getElementById('growthVal');
+    growthInput.addEventListener('input', () => {
+      hoverScale = growthInput.value / 100;
+      growthVal.textContent = hoverScale.toFixed(2) + '×';
+    });
+
+    // ── Circle size ──
+    const circleSizeInput = document.getElementById('circleSize');
+    const sizeVal         = document.getElementById('sizeVal');
+    circleSizeInput.addEventListener('input', () => {
+      const s = circleSizeInput.value + 'px';
+      cursor.style.width  = s;
+      cursor.style.height = s;
+      sizeVal.textContent = s;
+    });
+
+    // ── Background color ──
+    const bgColorInput = document.getElementById('bgColor');
+    const bgHex        = document.getElementById('bgHex');
+    bgColorInput.addEventListener('input', () => {
+      nav.style.background            = bgColorInput.value;
+      document.body.style.background  = bgColorInput.value;
+      bgHex.textContent               = bgColorInput.value;
+    });
+
+    // ── Text color ──
+    const textColorInput = document.getElementById('textColor');
+    const textHex        = document.getElementById('textHex');
+    textColorInput.addEventListener('input', () => {
+      nav.querySelectorAll('.nav-item').forEach(item => item.style.color = textColorInput.value);
+      textHex.textContent = textColorInput.value;
+    });
+
+    // ── Export ──
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const labels = [...nav.querySelectorAll('.nav-item')].map(a => a.textContent);
+      const bg     = bgColorInput.value;
+      const color  = textColorInput.value;
+      const size   = circleSizeInput.value;
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navigation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?${fontData[currentFont].url}&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: ${bg};
+      font-family: '${currentFont}', sans-serif;
+      cursor: none;
+    }
+
+    .cursor {
+      position: fixed;
+      top: 0; left: 0;
+      width: ${size}px;
+      height: ${size}px;
+      background: white;
+      border-radius: 50%;
+      pointer-events: none;
+      mix-blend-mode: difference;
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+      opacity: 0;
+      z-index: 9999;
+    }
+
+    .cursor.visible {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    nav { padding: 6rem 5rem; }
+
+    .nav-item {
+      display: table;
+      font-size: ${baseVW}vw;
+      font-weight: ${currentWeight};
+      color: ${color};
+      text-decoration: none;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      padding: 0.1em 0;
+      transition: font-size ${transitionDuration}s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <nav id="nav">
+${labels.map(l => `    <a class="nav-item" href="#">${l}</a>`).join('\n')}
+  </nav>
+  <script>
+    const cursor   = document.getElementById('cursor');
+    const nav      = document.getElementById('nav');
+    const navItems = nav.querySelectorAll('.nav-item');
+    const BASE_VW  = ${baseVW};
+    const SCALE    = ${hoverScale};
+
+    let mouseX = 0, mouseY = 0, curX = 0, curY = 0;
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    (function loop() {
+      curX = lerp(curX, mouseX, 0.12);
+      curY = lerp(curY, mouseY, 0.12);
+      cursor.style.left = curX + 'px';
+      cursor.style.top  = curY + 'px';
+      requestAnimationFrame(loop);
+    })();
+    document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+
+    function scaleAt(dist) {
+      if (dist === 0) return SCALE;
+      const squeeze = 1 - (SCALE - 1) * 0.3;
+      if (dist === 1) return squeeze * 0.95;
+      if (dist === 2) return squeeze * 0.88;
+      return squeeze * 0.84;
+    }
+
+    navItems.forEach((item, i) => {
+      item.addEventListener('mouseenter', () => {
+        cursor.classList.add('visible');
+        navItems.forEach((el, j) => el.style.fontSize = (BASE_VW * scaleAt(Math.abs(i - j))) + 'vw');
+      });
+      item.addEventListener('mouseleave', () => {
+        cursor.classList.remove('visible');
+        navItems.forEach(el => el.style.fontSize = BASE_VW + 'vw');
+      });
+    });
+  <\/script>
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = 'nav.html';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    // ── Reset ──
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      itemsInput.value = defaults.items;
+
+      fontSelect.value = defaults.font;
+      currentFont = defaults.font;
+      currentWeight = defaults.fontWeight;
+      loadFont(currentFont);
+
+      fontSizeInput.value = defaults.fontSize;
+      baseVW = defaults.fontSize;
+      fontSizeVal.textContent = baseVW + 'vw';
+
+      speedInput.value = defaults.speed;
+      transitionDuration = defaults.speed / 1000;
+      speedVal.textContent = transitionDuration + 's';
+
+      growthInput.value = defaults.growth;
+      hoverScale = defaults.growth / 100;
+      growthVal.textContent = hoverScale.toFixed(2) + '×';
+
+      circleSizeInput.value = defaults.size;
+      cursor.style.width  = defaults.size + 'px';
+      cursor.style.height = defaults.size + 'px';
+      sizeVal.textContent = defaults.size + 'px';
+
+      bgColorInput.value = defaults.bg;
+      nav.style.background           = defaults.bg;
+      document.body.style.background = defaults.bg;
+      bgHex.textContent = defaults.bg;
+
+      textColorInput.value = defaults.text;
+      nav.querySelectorAll('.nav-item').forEach(item => item.style.color = defaults.text);
+      textHex.textContent = defaults.text;
+
+      buildNav(defaults.items.split(';'));
+    });
+  </script>
+</body>
+</html>
