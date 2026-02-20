@@ -454,9 +454,32 @@
     // Lerp (linear interpolation) smoothly moves the blob toward the real mouse
     // position each animation frame, creating a lagging / fluid feel.
     let mouseX = 0, mouseY = 0, curX = 0, curY = 0;
+    let activeIndex = -1, lastHoverChange = 0;
     function lerp(a, b, t) { return a + (b - a) * t; }
 
     (function loop() {
+      // Read layout before any DOM writes — avoids mid-frame forced reflows.
+      // Cooldown of 80ms between item-to-item switches breaks the feedback
+      // loop where the CSS font-size animation shifts item boundaries and
+      // tricks getBoundingClientRect into thinking the cursor moved to a
+      // different item, causing rapid flicker.
+      const idx = getHoveredIndex(mouseX, mouseY);
+      if (idx !== activeIndex) {
+        const now = performance.now();
+        // Only throttle item→item switches; enter/exit nav fires immediately
+        if (idx === -1 || activeIndex === -1 || now - lastHoverChange >= 80) {
+          activeIndex = idx;
+          lastHoverChange = now;
+          if (idx === -1) {
+            cursor.classList.remove('visible');
+            resetScale();
+          } else {
+            cursor.classList.add('visible');
+            applyScale(idx);
+          }
+        }
+      }
+      // Write cursor position after reads
       curX = lerp(curX, mouseX, 0.12);
       curY = lerp(curY, mouseY, 0.12);
       cursor.style.left = curX + 'px';
@@ -516,7 +539,9 @@
     //   1. Bail early if cursor is outside the nav's horizontal bounds.
     //   2. Find whichever item's vertical centre is closest to the cursor.
     //   3. Confirm the cursor is within 10px of that item's horizontal extent.
-    let activeIndex = -1;
+    //
+    // Detection runs in the rAF loop (not mousemove) so layout reads always
+    // happen before DOM writes — no forced reflows.
 
     function getHoveredIndex(x, y) {
       const items = [...nav.querySelectorAll('.nav-item')];
@@ -543,22 +568,11 @@
       return closest;
     }
 
-    // Single mousemove listener handles both cursor position and hover state
+    // mousemove only records pointer position; all hover logic runs in the rAF
+    // loop above so layout reads always precede DOM writes.
     document.addEventListener('mousemove', e => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-
-      const idx = getHoveredIndex(e.clientX, e.clientY);
-      if (idx === activeIndex) return; // no change — do nothing
-      activeIndex = idx;
-
-      if (idx === -1) {
-        cursor.classList.remove('visible'); // shrink blob to dot
-        resetScale();
-      } else {
-        cursor.classList.add('visible');    // expand blob to full size
-        applyScale(idx);
-      }
     });
 
     // ── applyTransition ──────────────────────────────────────────────────────
@@ -762,20 +776,16 @@
 ${labels.map(l => `    <a class="nav-item" href="#">${l}</a>`).join('\n')}
   </nav>
   <script>
-    const cursor   = document.getElementById('cursor');
-    const nav      = document.getElementById('nav');
-    const BASE_VW  = ${baseVW};
-    const SCALE    = ${hoverScale};
+    const cursor  = document.getElementById('cursor');
+    const nav     = document.getElementById('nav');
+    const BASE_VW = ${baseVW};
+    const SCALE   = ${hoverScale};
 
     let mouseX = 0, mouseY = 0, curX = 0, curY = 0;
+    let activeIndex = -1, lastHoverChange = 0;
     function lerp(a, b, t) { return a + (b - a) * t; }
-    (function loop() {
-      curX = lerp(curX, mouseX, 0.12);
-      curY = lerp(curY, mouseY, 0.12);
-      cursor.style.left = curX + 'px';
-      cursor.style.top  = curY + 'px';
-      requestAnimationFrame(loop);
-    })();
+
+    // Only record pointer position here — no layout reads in a hot event handler
     document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
 
     function scaleAt(dist) {
@@ -785,8 +795,6 @@ ${labels.map(l => `    <a class="nav-item" href="#">${l}</a>`).join('\n')}
       if (dist === 2) return squeeze * 0.88;
       return squeeze * 0.84;
     }
-
-    let activeIndex = -1;
 
     function getHoveredIndex(x, y) {
       const items = [...nav.querySelectorAll('.nav-item')];
@@ -805,21 +813,34 @@ ${labels.map(l => `    <a class="nav-item" href="#">${l}</a>`).join('\n')}
       return closest;
     }
 
-    document.addEventListener('mousemove', e => {
-      mouseX = e.clientX; mouseY = e.clientY;
-      const idx = getHoveredIndex(e.clientX, e.clientY);
-      if (idx === activeIndex) return;
-      activeIndex = idx;
-      if (idx === -1) {
-        cursor.classList.remove('visible');
-        nav.querySelectorAll('.nav-item').forEach(el => el.style.fontSize = BASE_VW + 'vw');
-      } else {
-        cursor.classList.add('visible');
-        nav.querySelectorAll('.nav-item').forEach((el, j) =>
-          el.style.fontSize = (BASE_VW * scaleAt(Math.abs(idx - j))) + 'vw'
-        );
+    (function loop() {
+      // Read layout before any DOM writes — avoids mid-frame forced reflows.
+      // 80 ms cooldown between item→item switches breaks the feedback loop
+      // where the CSS font-size animation shifts boundaries and causes flicker.
+      const idx = getHoveredIndex(mouseX, mouseY);
+      if (idx !== activeIndex) {
+        const now = performance.now();
+        if (idx === -1 || activeIndex === -1 || now - lastHoverChange >= 80) {
+          activeIndex = idx;
+          lastHoverChange = now;
+          if (idx === -1) {
+            cursor.classList.remove('visible');
+            nav.querySelectorAll('.nav-item').forEach(el => el.style.fontSize = BASE_VW + 'vw');
+          } else {
+            cursor.classList.add('visible');
+            nav.querySelectorAll('.nav-item').forEach((el, j) =>
+              el.style.fontSize = (BASE_VW * scaleAt(Math.abs(idx - j))) + 'vw'
+            );
+          }
+        }
       }
-    });
+      // Write cursor position after reads
+      curX = lerp(curX, mouseX, 0.12);
+      curY = lerp(curY, mouseY, 0.12);
+      cursor.style.left = curX + 'px';
+      cursor.style.top  = curY + 'px';
+      requestAnimationFrame(loop);
+    })();
   <\/script>
 </body>
 </html>`;
