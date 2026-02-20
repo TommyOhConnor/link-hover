@@ -4,15 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Navigation</title>
+
+  <!-- Google Fonts preconnect for faster loading. The #googleFont link is
+       swapped out dynamically whenever the user changes the font. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link id="googleFont" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+
   <style>
+    /* ── Reset ──────────────────────────────────────────────────────────────
+       Zero out margins/padding and use border-box sizing globally so element
+       dimensions are predictable across all browsers. */
     *, *::before, *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    /* ── Page layout ────────────────────────────────────────────────────────
+       Flex row so the nav area and the control panel sit side by side.
+       cursor:none hides the system cursor — replaced by the custom blob. */
     body {
       background: #f2f2f0;
       font-family: 'Inter', sans-serif;
@@ -22,7 +32,12 @@
       min-height: 100vh;
     }
 
-    /* ── Cursor blob ── */
+    /* ── Custom cursor blob ─────────────────────────────────────────────────
+       A white circle fixed to the viewport that follows the mouse via JS.
+       mix-blend-mode:difference inverts whatever is beneath it — white circle
+       over dark text makes the text appear white; over a light background the
+       circle appears dark. Starts at scale(0.1) so it's a small dot by
+       default, and scales up to 1 when hovering a nav item (.visible class). */
     .cursor {
       position: fixed;
       top: 0;
@@ -41,17 +56,25 @@
       will-change: transform, left, top;
     }
 
+    /* Full-size blob shown when cursor is over a nav item */
     .cursor.visible {
       transform: translate(-50%, -50%) scale(1);
     }
 
-    /* ── Nav area ── */
+    /* ── Nav area ───────────────────────────────────────────────────────────
+       Takes up all remaining horizontal space beside the control panel. */
     nav {
       flex: 1;
       padding: 6rem 5rem;
       transition: background 0.3s ease;
     }
 
+    /* ── Nav items ──────────────────────────────────────────────────────────
+       display:table shrinks each item to its text width so the hover hit area
+       is tight to the text rather than spanning the full container width.
+       white-space:nowrap prevents text wrapping before measurement.
+       Font size is set in vw via JS so it can be animated proportionally.
+       The expo ease-out (0.16,1,0.3,1) gives the underwater grow/shrink feel. */
     .nav-item {
       display: table;
       font-weight: 800;
@@ -66,7 +89,10 @@
       user-select: none;
     }
 
-    /* ── Control Panel ── */
+    /* ── Control panel ──────────────────────────────────────────────────────
+       Fixed-width sidebar on the right. Dark background to visually separate
+       it from the nav preview. overflow-y:auto handles tall content on small
+       screens. cursor:default restores the system arrow inside the panel. */
     .panel {
       width: 260px;
       min-height: 100vh;
@@ -81,6 +107,7 @@
       overflow-y: auto;
     }
 
+    /* Section heading inside the panel (e.g. "Controls") */
     .panel h2 {
       font-size: 0.7rem;
       font-weight: 700;
@@ -90,12 +117,14 @@
       margin-bottom: -0.5rem;
     }
 
+    /* Wrapper for each label + input pair */
     .control {
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
     }
 
+    /* Control label — flex row so a live readout value can sit on the right */
     .control label {
       font-size: 0.85rem;
       font-weight: 600;
@@ -105,13 +134,15 @@
       align-items: center;
     }
 
+    /* Live readout value (e.g. "140px", "0.9s") shown beside slider labels */
     .control label span {
       font-weight: 400;
       opacity: 0.5;
       font-size: 0.8rem;
     }
 
-    /* Slider */
+    /* ── Range sliders ──────────────────────────────────────────────────────
+       Custom styled to match the dark panel. Thin track, round thumb. */
     input[type="range"] {
       -webkit-appearance: none;
       width: 100%;
@@ -136,11 +167,14 @@
       transform: scale(1.2);
     }
 
-    /* Select */
+    /* ── Select dropdowns ───────────────────────────────────────────────────
+       appearance:none removes the native arrow so we can draw our own via
+       the ::after pseudo-element on the wrapper div. */
     .select-wrap {
       position: relative;
     }
 
+    /* Custom dropdown chevron */
     .select-wrap::after {
       content: '';
       position: absolute;
@@ -172,7 +206,9 @@
 
     select:focus { border-color: #666; }
 
-    /* Color picker */
+    /* ── Color pickers ──────────────────────────────────────────────────────
+       Circular swatch buttons. The hex value is shown in a monospace span
+       beside each picker and updates live as the color changes. */
     .color-row {
       display: flex;
       align-items: center;
@@ -198,6 +234,7 @@
       border-radius: 50%;
     }
 
+    /* Monospace hex readout beside each color swatch */
     .color-hex {
       font-size: 0.8rem;
       font-family: 'SF Mono', 'Fira Code', monospace;
@@ -205,7 +242,9 @@
       letter-spacing: 0.05em;
     }
 
-    /* Textarea */
+    /* ── Items textarea ─────────────────────────────────────────────────────
+       Multi-line input where the user types nav item labels separated by
+       semicolons. resize:vertical lets them expand it if needed. */
     textarea {
       width: 100%;
       background: #2a2a2a;
@@ -225,18 +264,21 @@
 
     textarea:focus { border-color: #666; }
 
+    /* Small instructional text below the textarea */
     .hint {
       font-size: 0.72rem;
       opacity: 0.35;
       line-height: 1.5;
     }
 
+    /* Horizontal rule used to visually group related controls */
     .divider {
       border: none;
       border-top: 1px solid #2a2a2a;
     }
 
-    /* Reset button */
+    /* ── Panel buttons (Reset / Export) ─────────────────────────────────────
+       Ghost-style buttons that sit at the bottom of the panel. */
     .btn-reset {
       margin-top: auto;
       padding: 0.7rem 1rem;
@@ -260,12 +302,17 @@
 </head>
 <body>
 
+  <!-- Custom cursor blob — positioned by JS, blend mode creates the inversion effect -->
   <div class="cursor" id="cursor"></div>
+
+  <!-- Nav area — items are injected here by buildNav() -->
   <nav id="nav"></nav>
 
+  <!-- ── Control panel ───────────────────────────────────────────────────── -->
   <aside class="panel">
     <h2>Controls</h2>
 
+    <!-- Items: semicolon-separated labels that become nav rows -->
     <div class="control">
       <label>Items</label>
       <textarea id="itemsInput">John,; Paul,; George,; & Ringo</textarea>
@@ -274,6 +321,7 @@
 
     <hr class="divider">
 
+    <!-- Font family selector — options are loaded from Google Fonts on demand -->
     <div class="control">
       <label>Font</label>
       <div class="select-wrap">
@@ -290,6 +338,8 @@
       </div>
     </div>
 
+    <!-- Font weight — options are rebuilt dynamically to match what the
+         selected font actually supports -->
     <div class="control">
       <label>Font Weight</label>
       <div class="select-wrap">
@@ -305,6 +355,7 @@
       </div>
     </div>
 
+    <!-- Font size in vw units — adjusts the base size used by the accordion -->
     <div class="control">
       <label>Font Size <span id="fontSizeVal">6vw</span></label>
       <input type="range" id="fontSize" min="2" max="14" value="6" step="0.5">
@@ -312,16 +363,19 @@
 
     <hr class="divider">
 
+    <!-- Cursor blob diameter in px -->
     <div class="control">
       <label>Circle Size <span id="sizeVal">100px</span></label>
       <input type="range" id="circleSize" min="40" max="300" value="100">
     </div>
 
+    <!-- Duration of the font-size accordion transition -->
     <div class="control">
       <label>Transition Speed <span id="speedVal">1.9s</span></label>
       <input type="range" id="speed" min="100" max="2500" value="1900" step="50">
     </div>
 
+    <!-- How much the hovered item grows relative to its base size -->
     <div class="control">
       <label>Growth Size <span id="growthVal">1.10×</span></label>
       <input type="range" id="growth" min="100" max="250" value="110" step="1">
@@ -329,6 +383,7 @@
 
     <hr class="divider">
 
+    <!-- Page background color -->
     <div class="control">
       <label>Background Color</label>
       <div class="color-row">
@@ -337,6 +392,7 @@
       </div>
     </div>
 
+    <!-- Nav item text color -->
     <div class="control">
       <label>Text Color</label>
       <div class="color-row">
@@ -345,7 +401,11 @@
       </div>
     </div>
 
+    <!-- Restores all controls and the nav to the hardcoded default values -->
     <button class="btn-reset" id="resetBtn">Reset to Defaults</button>
+
+    <!-- Generates and downloads a self-contained index.html with current
+         settings baked in (no control panel) -->
     <button class="btn-reset" id="exportBtn" style="border-color:#fff;color:#fff;">Export HTML</button>
   </aside>
 
@@ -353,13 +413,17 @@
     const cursor = document.getElementById('cursor');
     const nav    = document.getElementById('nav');
 
-    // ── State ──
-    let hoverScale         = 1.10;
-    let transitionDuration = 1.9;
-    let baseVW             = 6;
+    // ── Mutable state ────────────────────────────────────────────────────────
+    // These variables are the single source of truth for all live settings.
+    // Controls update them; buildNav / applyScale / applyFont read from them.
+    let hoverScale         = 1.10;  // multiplier for the hovered item's font size
+    let transitionDuration = 1.9;   // seconds for the accordion ease
+    let baseVW             = 6;     // base font size in viewport-width units
     let currentFont        = 'Fraunces';
     let currentWeight      = '500';
 
+    // ── Default values ───────────────────────────────────────────────────────
+    // Used by the Reset button to restore everything to the original state.
     const defaults = {
       items:      'John,; Paul,; George,; & Ringo',
       font:       'Fraunces',
@@ -372,7 +436,9 @@
       growth:     110,
     };
 
-    // Per-font: available weights + Google Fonts URL
+    // ── Font catalogue ───────────────────────────────────────────────────────
+    // Maps each font name to its supported weights and the Google Fonts URL
+    // fragment used to load it. loadFont() swaps the <link> tag at runtime.
     const fontData = {
       'Inter':              { weights: [300,400,500,600,700,800,900], url: 'family=Inter:wght@300;400;500;600;700;800;900' },
       'Playfair Display':   { weights: [400,500,600,700,800,900],     url: 'family=Playfair+Display:wght@400;500;600;700;800;900' },
@@ -384,7 +450,9 @@
       'DM Sans':            { weights: [300,400,500,600,700,800,900], url: 'family=DM+Sans:wght@300;400;500;600;700;800;900' },
     };
 
-    // ── Cursor follow ──
+    // ── Cursor follow ────────────────────────────────────────────────────────
+    // Lerp (linear interpolation) smoothly moves the blob toward the real mouse
+    // position each animation frame, creating a lagging / fluid feel.
     let mouseX = 0, mouseY = 0, curX = 0, curY = 0;
     function lerp(a, b, t) { return a + (b - a) * t; }
 
@@ -396,7 +464,10 @@
       requestAnimationFrame(loop);
     })();
 
-    // ── Accordion scale ──
+    // ── Accordion scale ──────────────────────────────────────────────────────
+    // Returns the font-size multiplier for an item at `dist` positions away
+    // from the hovered item. dist=0 is the hovered item itself (grows).
+    // Neighbours shrink proportionally so the layout breathes as a whole.
     function scaleAt(dist) {
       if (dist === 0) return hoverScale;
       const squeeze = 1 - (hoverScale - 1) * 0.3;
@@ -405,17 +476,21 @@
       return squeeze * 0.84;
     }
 
+    // Applies the accordion scale to all nav items relative to hoveredIndex
     function applyScale(hoveredIndex) {
       nav.querySelectorAll('.nav-item').forEach((item, j) => {
         item.style.fontSize = (baseVW * scaleAt(Math.abs(hoveredIndex - j))) + 'vw';
       });
     }
 
+    // Resets all nav items back to the base font size
     function resetScale() {
       nav.querySelectorAll('.nav-item').forEach(item => item.style.fontSize = baseVW + 'vw');
     }
 
-    // ── Build nav ──
+    // ── Build nav ────────────────────────────────────────────────────────────
+    // Clears the nav and recreates one <a> per label with current style state.
+    // Called on initial load, when items are edited, and on reset.
     function buildNav(labels) {
       nav.innerHTML = '';
       labels.forEach((label, i) => {
@@ -423,7 +498,7 @@
         a.className        = 'nav-item';
         a.href             = '#';
         a.textContent      = label.trim();
-        a.style.color = document.getElementById('textColor').value;
+        a.style.color      = document.getElementById('textColor').value;
         a.style.fontSize   = baseVW + 'vw';
         a.style.fontFamily = `'${currentFont}', sans-serif`;
         a.style.fontWeight = currentWeight;
@@ -432,20 +507,28 @@
       });
     }
 
-    // ── Hover tracking via vertical midpoints ──
+    // ── Hover detection ──────────────────────────────────────────────────────
+    // Uses getBoundingClientRect + vertical midpoints instead of mouseenter/
+    // mouseleave events. This avoids glitching at item edges caused by the
+    // accordion animation shifting element boundaries during playback.
+    //
+    // Algorithm:
+    //   1. Bail early if cursor is outside the nav's horizontal bounds.
+    //   2. Find whichever item's vertical centre is closest to the cursor.
+    //   3. Confirm the cursor is within 10px of that item's horizontal extent.
     let activeIndex = -1;
 
     function getHoveredIndex(x, y) {
-      const items  = [...nav.querySelectorAll('.nav-item')];
+      const items = [...nav.querySelectorAll('.nav-item')];
       if (!items.length) return -1;
 
       const navRect = nav.getBoundingClientRect();
 
-      // Bail if cursor is outside the nav horizontally or well outside vertically
+      // Outside nav horizontally, or far outside vertically — no hover
       if (x < navRect.left || x > navRect.right) return -1;
       if (y < navRect.top - 40 || y > navRect.bottom + 40) return -1;
 
-      // Find the item whose vertical center is closest to the cursor
+      // Find the item whose vertical centre is nearest the cursor
       let closest = 0, minDist = Infinity;
       items.forEach((item, i) => {
         const r    = item.getBoundingClientRect();
@@ -453,36 +536,43 @@
         if (dist < minDist) { minDist = dist; closest = i; }
       });
 
-      // Only activate if cursor is over the text horizontally (with small buffer)
+      // Confirm cursor is horizontally over the text (with a 10px buffer)
       const activeRect = items[closest].getBoundingClientRect();
       if (x < activeRect.left - 10 || x > activeRect.right + 10) return -1;
 
       return closest;
     }
 
+    // Single mousemove listener handles both cursor position and hover state
     document.addEventListener('mousemove', e => {
       mouseX = e.clientX;
       mouseY = e.clientY;
 
       const idx = getHoveredIndex(e.clientX, e.clientY);
-      if (idx === activeIndex) return;
+      if (idx === activeIndex) return; // no change — do nothing
       activeIndex = idx;
 
       if (idx === -1) {
-        cursor.classList.remove('visible');
+        cursor.classList.remove('visible'); // shrink blob to dot
         resetScale();
       } else {
-        cursor.classList.add('visible');
+        cursor.classList.add('visible');    // expand blob to full size
         applyScale(idx);
       }
     });
 
+    // ── applyTransition ──────────────────────────────────────────────────────
+    // Re-applies the transition string to all existing nav items after the
+    // speed slider changes transitionDuration.
     function applyTransition() {
       nav.querySelectorAll('.nav-item').forEach(item => {
         item.style.transition = `font-size ${transitionDuration}s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease`;
       });
     }
 
+    // ── applyFont ────────────────────────────────────────────────────────────
+    // Updates font-family and font-weight on all existing nav items without
+    // rebuilding the whole nav (used when only the font/weight changes).
     function applyFont() {
       nav.querySelectorAll('.nav-item').forEach(item => {
         item.style.fontFamily = `'${currentFont}', sans-serif`;
@@ -490,13 +580,15 @@
       });
     }
 
-    // Load a Google Font dynamically and update weight options
+    // ── loadFont ─────────────────────────────────────────────────────────────
+    // Swaps the Google Fonts <link> to load the selected font, then rebuilds
+    // the font weight dropdown to show only the weights that font supports.
+    // If the current weight isn't available, snaps to the nearest valid one.
     function loadFont(name) {
       const data = fontData[name];
       document.getElementById('googleFont').href =
         `https://fonts.googleapis.com/css2?${data.url}&display=swap`;
 
-      // Rebuild weight options to only show what this font supports
       const weightSelect = document.getElementById('fontWeight');
       const labels = { 300:'300 — Light', 400:'400 — Regular', 500:'500 — Medium',
                        600:'600 — Semi Bold', 700:'700 — Bold', 800:'800 — Extra Bold', 900:'900 — Black' };
@@ -504,7 +596,7 @@
         `<option value="${w}"${String(w) === currentWeight ? ' selected' : ''}>${labels[w]}</option>`
       ).join('');
 
-      // Clamp current weight to nearest available
+      // Clamp to nearest supported weight
       const closest = data.weights.reduce((a, b) =>
         Math.abs(b - parseInt(currentWeight)) < Math.abs(a - parseInt(currentWeight)) ? b : a
       );
@@ -512,20 +604,24 @@
       weightSelect.value = currentWeight;
     }
 
-    // ── Initial load — apply all defaults to DOM ──
+    // ── Initial load ─────────────────────────────────────────────────────────
+    // Applies all default values to the DOM so the page renders correctly
+    // on first load without requiring any user interaction.
     loadFont(defaults.font);
     buildNav(defaults.items.split(';'));
-    document.body.style.background  = defaults.bg;
-    cursor.style.width               = defaults.size + 'px';
-    cursor.style.height              = defaults.size + 'px';
+    document.body.style.background = defaults.bg;
+    cursor.style.width              = defaults.size + 'px';
+    cursor.style.height             = defaults.size + 'px';
 
-    // ── Items textarea ──
+    // ── Control: items textarea ──────────────────────────────────────────────
+    // Rebuilds the nav live as the user types, splitting on semicolons.
     const itemsInput = document.getElementById('itemsInput');
     itemsInput.addEventListener('input', () => {
       buildNav(itemsInput.value.split(';').filter(l => l.trim()));
     });
 
-    // ── Font selector ──
+    // ── Control: font selector ───────────────────────────────────────────────
+    // Loads the new font, updates the weight dropdown, applies to nav items.
     const fontSelect = document.getElementById('fontSelect');
     fontSelect.addEventListener('change', () => {
       currentFont = fontSelect.value;
@@ -533,14 +629,15 @@
       applyFont();
     });
 
-    // ── Font weight ──
+    // ── Control: font weight ─────────────────────────────────────────────────
     const fontWeightSelect = document.getElementById('fontWeight');
     fontWeightSelect.addEventListener('change', () => {
       currentWeight = fontWeightSelect.value;
       applyFont();
     });
 
-    // ── Font size ──
+    // ── Control: font size ───────────────────────────────────────────────────
+    // Updates baseVW and resets all items to the new size immediately.
     const fontSizeInput = document.getElementById('fontSize');
     const fontSizeVal   = document.getElementById('fontSizeVal');
     fontSizeInput.addEventListener('input', () => {
@@ -549,7 +646,8 @@
       resetScale();
     });
 
-    // ── Speed ──
+    // ── Control: transition speed ────────────────────────────────────────────
+    // Updates transitionDuration and re-stamps the transition on all items.
     const speedInput = document.getElementById('speed');
     const speedVal   = document.getElementById('speedVal');
     speedInput.addEventListener('input', () => {
@@ -558,7 +656,8 @@
       applyTransition();
     });
 
-    // ── Growth ──
+    // ── Control: growth size ─────────────────────────────────────────────────
+    // Updates hoverScale used by scaleAt() on the next hover.
     const growthInput = document.getElementById('growth');
     const growthVal   = document.getElementById('growthVal');
     growthInput.addEventListener('input', () => {
@@ -566,7 +665,8 @@
       growthVal.textContent = hoverScale.toFixed(2) + '×';
     });
 
-    // ── Circle size ──
+    // ── Control: circle size ─────────────────────────────────────────────────
+    // Resizes the cursor blob element directly.
     const circleSizeInput = document.getElementById('circleSize');
     const sizeVal         = document.getElementById('sizeVal');
     circleSizeInput.addEventListener('input', () => {
@@ -576,7 +676,8 @@
       sizeVal.textContent = s;
     });
 
-    // ── Background color ──
+    // ── Control: background color ────────────────────────────────────────────
+    // Updates both the nav area and the body background (panel stays dark).
     const bgColorInput = document.getElementById('bgColor');
     const bgHex        = document.getElementById('bgHex');
     bgColorInput.addEventListener('input', () => {
@@ -585,7 +686,7 @@
       bgHex.textContent               = bgColorInput.value;
     });
 
-    // ── Text color ──
+    // ── Control: text color ──────────────────────────────────────────────────
     const textColorInput = document.getElementById('textColor');
     const textHex        = document.getElementById('textHex');
     textColorInput.addEventListener('input', () => {
@@ -593,7 +694,10 @@
       textHex.textContent = textColorInput.value;
     });
 
-    // ── Export ──
+    // ── Export ───────────────────────────────────────────────────────────────
+    // Generates a self-contained HTML file with all current settings baked in.
+    // The exported file has no control panel — just the nav and its behaviour.
+    // Triggers a browser download of the resulting file.
     document.getElementById('exportBtn').addEventListener('click', () => {
       const labels = [...nav.querySelectorAll('.nav-item')].map(a => a.textContent);
       const bg     = bgColorInput.value;
@@ -626,14 +730,12 @@
       border-radius: 50%;
       pointer-events: none;
       mix-blend-mode: difference;
-      transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.1);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 9999;
     }
 
     .cursor.visible {
-      opacity: 1;
       transform: translate(-50%, -50%) scale(1);
     }
 
@@ -648,6 +750,7 @@
       line-height: 1.05;
       letter-spacing: -0.02em;
       padding: 0.1em 0;
+      white-space: nowrap;
       transition: font-size ${transitionDuration}s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
       user-select: none;
     }
@@ -661,7 +764,6 @@ ${labels.map(l => `    <a class="nav-item" href="#">${l}</a>`).join('\n')}
   <script>
     const cursor   = document.getElementById('cursor');
     const nav      = document.getElementById('nav');
-    const navItems = nav.querySelectorAll('.nav-item');
     const BASE_VW  = ${baseVW};
     const SCALE    = ${hoverScale};
 
@@ -684,15 +786,39 @@ ${labels.map(l => `    <a class="nav-item" href="#">${l}</a>`).join('\n')}
       return squeeze * 0.84;
     }
 
-    navItems.forEach((item, i) => {
-      item.addEventListener('mouseenter', () => {
-        cursor.classList.add('visible');
-        navItems.forEach((el, j) => el.style.fontSize = (BASE_VW * scaleAt(Math.abs(i - j))) + 'vw');
+    let activeIndex = -1;
+
+    function getHoveredIndex(x, y) {
+      const items = [...nav.querySelectorAll('.nav-item')];
+      if (!items.length) return -1;
+      const navRect = nav.getBoundingClientRect();
+      if (x < navRect.left || x > navRect.right) return -1;
+      if (y < navRect.top - 40 || y > navRect.bottom + 40) return -1;
+      let closest = 0, minDist = Infinity;
+      items.forEach((item, i) => {
+        const r = item.getBoundingClientRect();
+        const dist = Math.abs(y - (r.top + r.bottom) / 2);
+        if (dist < minDist) { minDist = dist; closest = i; }
       });
-      item.addEventListener('mouseleave', () => {
+      const activeRect = items[closest].getBoundingClientRect();
+      if (x < activeRect.left - 10 || x > activeRect.right + 10) return -1;
+      return closest;
+    }
+
+    document.addEventListener('mousemove', e => {
+      mouseX = e.clientX; mouseY = e.clientY;
+      const idx = getHoveredIndex(e.clientX, e.clientY);
+      if (idx === activeIndex) return;
+      activeIndex = idx;
+      if (idx === -1) {
         cursor.classList.remove('visible');
-        navItems.forEach(el => el.style.fontSize = BASE_VW + 'vw');
-      });
+        nav.querySelectorAll('.nav-item').forEach(el => el.style.fontSize = BASE_VW + 'vw');
+      } else {
+        cursor.classList.add('visible');
+        nav.querySelectorAll('.nav-item').forEach((el, j) =>
+          el.style.fontSize = (BASE_VW * scaleAt(Math.abs(idx - j))) + 'vw'
+        );
+      }
     });
   <\/script>
 </body>
@@ -706,36 +832,38 @@ ${labels.map(l => `    <a class="nav-item" href="#">${l}</a>`).join('\n')}
       URL.revokeObjectURL(a.href);
     });
 
-    // ── Reset ──
+    // ── Reset ────────────────────────────────────────────────────────────────
+    // Restores every control and state variable back to the defaults object,
+    // then rebuilds the nav so the display matches.
     document.getElementById('resetBtn').addEventListener('click', () => {
       itemsInput.value = defaults.items;
 
       fontSelect.value = defaults.font;
-      currentFont = defaults.font;
-      currentWeight = defaults.fontWeight;
+      currentFont      = defaults.font;
+      currentWeight    = defaults.fontWeight;
       loadFont(currentFont);
 
-      fontSizeInput.value = defaults.fontSize;
-      baseVW = defaults.fontSize;
+      fontSizeInput.value     = defaults.fontSize;
+      baseVW                  = defaults.fontSize;
       fontSizeVal.textContent = baseVW + 'vw';
 
-      speedInput.value = defaults.speed;
-      transitionDuration = defaults.speed / 1000;
-      speedVal.textContent = transitionDuration + 's';
+      speedInput.value            = defaults.speed;
+      transitionDuration          = defaults.speed / 1000;
+      speedVal.textContent        = transitionDuration + 's';
 
-      growthInput.value = defaults.growth;
-      hoverScale = defaults.growth / 100;
-      growthVal.textContent = hoverScale.toFixed(2) + '×';
+      growthInput.value           = defaults.growth;
+      hoverScale                  = defaults.growth / 100;
+      growthVal.textContent       = hoverScale.toFixed(2) + '×';
 
-      circleSizeInput.value = defaults.size;
-      cursor.style.width  = defaults.size + 'px';
-      cursor.style.height = defaults.size + 'px';
-      sizeVal.textContent = defaults.size + 'px';
+      circleSizeInput.value   = defaults.size;
+      cursor.style.width      = defaults.size + 'px';
+      cursor.style.height     = defaults.size + 'px';
+      sizeVal.textContent     = defaults.size + 'px';
 
-      bgColorInput.value = defaults.bg;
+      bgColorInput.value             = defaults.bg;
       nav.style.background           = defaults.bg;
       document.body.style.background = defaults.bg;
-      bgHex.textContent = defaults.bg;
+      bgHex.textContent              = defaults.bg;
 
       textColorInput.value = defaults.text;
       nav.querySelectorAll('.nav-item').forEach(item => item.style.color = defaults.text);
