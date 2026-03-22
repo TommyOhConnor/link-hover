@@ -14,6 +14,7 @@ const mime = {
   ".json": "application/json",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json",
 };
 
 const server = http.createServer((req, res) => {
