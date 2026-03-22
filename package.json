@@ -1,0 +1,8 @@
+{
+  "name": "hover-effects",
+  "private": true,
+  "scripts": {
+    "dev": "node dev-server.mjs",
+    "build": "node -e \"process.exit(0)\""
+  }
+}
